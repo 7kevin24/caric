@@ -1905,6 +1905,7 @@ public:
     mainbrain() {}
     mainbrain(string str, string name)
     {
+        prev_gimbal_position = Eigen::Vector3d::Zero();
         drone_rotation_matrix = Eigen::Matrix3d::Identity();
         grid_size = Eigen::Vector3d(safe_distance, safe_distance, safe_distance);
         global_map = grid_map(grid_size);
@@ -2030,6 +2031,16 @@ public:
         {
             return;
         }
+
+        if ((now_gimbal_position - prev_gimbal_position).norm() > 0.1)
+        {
+            // Keep the drone still
+            target_position = now_global_position;
+            get_way_point = true;
+            prev_gimbal_position = now_gimbal_position;
+            return;
+        }
+
         if (map_set.size() == now_id && is_transfer)
         {
             // fly home
@@ -2566,6 +2577,8 @@ public:
     }
 
 private:
+    Eigen::Vector3d prev_gimbal_position;
+    bool is_gimbal_moving = false; // Track if the gimbal is moving
     int now_id = 0;
     int map_set_use = 0;
     int state = 0;
