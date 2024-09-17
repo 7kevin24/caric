@@ -186,15 +186,15 @@ void AStar::refreshOpenList(std::shared_ptr<ANode> point, std::shared_ptr<ANode>
                         }
                         else
                         {
-                            if (i == point->x && (maps[i][j][point->z] == 1 || maps[i][point->y][k] == 1))
+                            if (i == point->x && (maps[i][j][point->z] == 1 && maps[i][point->y][k] == 1))
                             {
                                 continue;
                             }
-                            else if (j == point->y && (maps[point->x][j][k] == 1 || maps[i][j][point->z] == 1))
+                            else if (j == point->y && (maps[point->x][j][k] == 1 && maps[i][j][point->z] == 1))
                             {
                                 continue;
                             }
-                            else if (k == point->z && (maps[point->x][j][k] == 1 || maps[i][point->y][k] == 1))
+                            else if (k == point->z && (maps[point->x][j][k] == 1 && maps[i][point->y][k] == 1))
                             {
                                 continue;
                             }
@@ -221,16 +221,20 @@ void AStar::refreshOpenList(std::shared_ptr<ANode> point, std::shared_ptr<ANode>
             {
                 for (int k = point->z - 1; k <= point->z + 1; ++k)
                 {
+                    // traverse the 26 points around the current point
                     if (i >= 0 && j >= 0 && k >= 0 && i < map_shape.x() && j < map_shape.y() && k < map_shape.z())
                     {
+                        // check within boundary
                         if (maps[i][j][k] == 1 || (i == point->x && j == point->y && k == point->z))
                         {
+                        // skip the current point and the points that are obstacles
                             continue;
                         }
                         if (abs(i - point->x) == 1 && abs(j - point->y) == 1 && abs(k - point->z) == 1)
                         {
+                            // for diagonal points
                             if (maps[i][j][point->z] == 0 && maps[i][point->y][k] == 0 && maps[point->x][j][k] == 0)
-                            {
+                            {//if the three points around the diagonal point are not obstacles
                                 auto cur = std::make_shared<ANode>(i, j, k, point);
                                 cur->G = costLargest + point->G;
                                 ;
@@ -261,6 +265,7 @@ void AStar::refreshOpenList(std::shared_ptr<ANode> point, std::shared_ptr<ANode>
                         }
                         else if ((i == point->x && j == point->y) || (i == point->x && k == point->z) || (k == point->z && j == point->y))
                         {
+                            // for the 6 points around the current point
                             auto cur = std::make_shared<ANode>(i, j, k, point);
                             cur->G = costLow + point->G;
                             ;
@@ -288,17 +293,17 @@ void AStar::refreshOpenList(std::shared_ptr<ANode> point, std::shared_ptr<ANode>
                                 }
                             }
                         }
-                        else
+                        else // 12 points in the same plane but not containing the current point directly
                         {
-                            if (i == point->x && (maps[i][j][point->z] == 1 || maps[i][point->y][k] == 1))
+                            if (i == point->x && (maps[i][j][point->z] == 1 && maps[i][point->y][k] == 1))
                             {
                                 continue;
                             }
-                            else if (j == point->y && (maps[point->x][j][k] == 1 || maps[i][j][point->z] == 1))
+                            else if (j == point->y && (maps[point->x][j][k] == 1 && maps[i][j][point->z] == 1))
                             {
                                 continue;
                             }
-                            else if (k == point->z && (maps[point->x][j][k] == 1 || maps[i][point->y][k] == 1))
+                            else if (k == point->z && (maps[point->x][j][k] == 1 && maps[i][point->y][k] == 1))
                             {
                                 continue;
                             }
@@ -367,6 +372,7 @@ list<Eigen::Vector3i> AStar::get_path(vector<vector<std::vector<int>>> m, Eigen:
     //     cout<<"ep!=0"<<": "<<maps[ep.x()][ep.y()][ep.z()]<<endl;
     // } //debug test
     if (sp == ep)
+    //sp : start position index      ep : end position index
     {
         return {sp};
     }
