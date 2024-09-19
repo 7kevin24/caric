@@ -3,7 +3,8 @@
     <arg name="manual_control" default="false" />
 
     <!-- Launch the simulator -->
-    <include file="$(find caric_mission)/launch/mbs_debug.launch" />
+    <!--include file="$(find caric_mission)/launch/mbs_debug.launch" /> -->
+    <include file="$(find caric_mission)/launch/run_mbs.launch" />
     <!-- <include file="$(find caric_mission)/launch/run_hangar.launch"/> -->
     <!-- <include file="$(find caric_mission)/launch/run_crane.launch"/> -->
 
@@ -39,7 +40,7 @@
     
         <arg name="namespace"  default="changi" />
 
-        <node name="baseline_planner" pkg="caric_baseline" type="baseline_planner" launch-prefix="bash -c 'sleep 5; $0 $@'">
+        <node name="baseline_planner" pkg="caric_baseline" type="baseline_planner" launch-prefix="bash -c 'sleep 5; $0 $@'" output="screen">
 
             <!-- Input topics -->
             <remap from="/cloud_inW"                   to="/$(arg namespace)/cloud_inW" />
@@ -63,7 +64,7 @@
         
         <arg name="namespace"  default="raffles" />
 
-        <node name="baseline_planner" pkg="caric_baseline" type="baseline_planner" launch-prefix="bash -c 'sleep 5; $0 $@'" output="screen" >
+        <node name="baseline_planner" pkg="caric_baseline" type="baseline_planner" launch-prefix="bash -c 'sleep 5; $0 $@'">
             
             <!-- Input topics -->
             <remap from="/cloud_inW"                   to="/$(arg namespace)/cloud_inW" />
@@ -111,7 +112,7 @@
         
         <arg name="namespace"  default="nanyang" />
 
-        <node name="baseline_planner" pkg="caric_baseline" type="baseline_planner" launch-prefix="bash -c 'sleep 5; $0 $@'">
+        <node name="baseline_planner" pkg="caric_baseline" type="baseline_planner" launch-prefix="bash -c 'sleep 5; $0 $@'" output = "screen">
 
             <!-- Input topics -->
             <remap from="/cloud_inW"                   to="/$(arg namespace)/cloud_inW" />

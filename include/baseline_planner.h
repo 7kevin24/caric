@@ -218,7 +218,8 @@ public:
         cout << " map_global_center: " << map_global_center.transpose() << RESET << endl;
         grid_size = grid_size_in;
         initial_the_convert();
-        interval = floor(map_shape.z() / team_size);
+        interval = floor(map_shape.z()*1.05 / team_size);
+        cout<<RED<<"This is interval: "<<interval<<RESET<<endl;
         cout << "Teamsize:"
              << team_size << endl; // test
         for (int i = 1; i < Teamsize_in; i++)
@@ -834,6 +835,7 @@ public:
 
     int get_state_leader()
     {
+        // TODO: set leader state to 3
         bool flag_state = true;
         if (mystate == 3)
         {
@@ -847,7 +849,8 @@ public:
                 return mystate;
             }
         }
-        if (flag_state && mystate == 2)
+        // if (flag_state && mystate == 2)
+        if(flag_state)
         {
             mystate = 3;
         }
@@ -896,6 +899,10 @@ public:
         if (path_index_temp.empty())
         {
             finish_exp_flag[region_index] = 1;
+            if(region_index+1 < finish_exp_flag.size()){
+                finish_exp_flag[region_index+1] = 1;
+            }
+            cout << RED << "### No available path hence done exploration!!!" << RESET << endl;
             if (height < region_slice_layer[region_index])
             {
                 height = region_slice_layer[region_index];
@@ -905,6 +912,8 @@ public:
                 if (local_dict[follower[region_index]].state != 1)
                 {
                     finish_exp_flag[region_index] = 1;
+
+                    cout<<RED<<"### Finished exploration!!!"<<RESET<<endl;
                     path_index_temp = Dijkstra_search_fly_in_xy(interval * (region_index - 1), height, myname);
                     if (path_index_temp.empty() || path_index_temp.size() == 1)
                     {
@@ -942,6 +951,7 @@ public:
 
     void take_photo(string myname)
     {
+        //TODO: PHD taking photo?
         if (!init_task_id)
         {
             int i = 0;
@@ -1068,6 +1078,8 @@ public:
         // cout << BLUE + "###position_global:" << now_position_global.transpose() << RESET << endl;
         // cout << RED + "###position_local:" << now_position_local.transpose() << RESET << endl;
         // cout << GREEN + "###position_index:" << now_position_index.transpose() << RESET << endl;
+        bool flag = false;
+        static int count = 0;
         if (print)
         {
             cout << "direction_global:" << direction_global.transpose() << endl;
@@ -1088,6 +1100,13 @@ public:
         {
             search_direction.pop_front();
             // cout<<"pop front search"<<endl;// test
+        }
+        else{
+            count++;
+        }
+        if(count>5){
+            count=0;
+            search_direction.clear();
         }
     }
 
@@ -1143,6 +1162,7 @@ public:
     }
     void set_fly_in_index(string tar)
     {
+        //TODO: set_fly_in_index
         try
         {
             Eigen::Vector3i vec_fly;
@@ -1218,9 +1238,11 @@ public:
     }
     list<string> get_state_string_list()
     {
+        //TODO: get_state_string_list
         list<string> result;
         for (int i = 0; i < finish_exp_flag.size(); i++)
         {
+        cout<<"flag & finish index: "<<i<<" "<<finish_exp_flag[i]<<" "<<finish_flag[i]<<endl;
             if (finish_exp_flag[i] == 1 && finish_flag[i] == 0)
             {
                 string str_state_set = follower[i] + ";1;";
@@ -2086,12 +2108,14 @@ public:
     }
 
     void replan()
+    // TODO:replan()  check is_transfer&state
     {
         if (!finish_init)
         {
             // Do not proceed if initialization is not complete
             return;
         }
+        //cout<<GREEN<<namespace_<<" state: "<<state<<" is_transfer: "<<is_transfer<<RESET<<endl;
         //cout <<GREEN<< namespace_ << "now_id = " << now_id << " position: " << now_global_position.transpose() <<RESET<< endl;
         // Check if the drone needs to stay still based on gimbal position
         // if ((now_gimbal_position - prev_gimbal_position).norm() > 0.1)
@@ -2165,13 +2189,13 @@ public:
                     return;
                 }
             }
-        } // above are flying back to home
+        } // above are flying back to home, below is transfer
         else if (finish_init && is_transfer)
         {
             // If initialization is complete and in transfer mode
             if (namespace_ == "/jurong" || namespace_ == "/raffles")
             {
-                // Special handling for specific namespaces
+                // Special handling for leaders
                 Eigen::Vector3d target = map_set[now_id].get_fly_in_point_global(); // Get target for flight
                 bool flag = false;
                 // Calculate local path to the target
@@ -2188,7 +2212,7 @@ public:
             }
             else
             {
-                // General handling for other namespaces
+                // General handling for followers
                 if (state == 0)
                 {
                     // If not transferring and ready to transfer
@@ -2256,7 +2280,7 @@ public:
                     return;
                 }
             }
-            else
+            else   // follower taking photo
             {
                 if (map_set.size() > now_id)
                 {
@@ -2264,14 +2288,14 @@ public:
                 }
                 else
                 {
-                    state = 0; // Set state to not transferring
+                    state = 0; // Set state to 0 (idle)
                 }
                 if (state == 0)
                 {
                     is_transfer = true; // not transfering + not leader + state == 0(may because mystate=0 or no BB available)
                     return;
                 }
-                if (map_set.size() > now_id) // repeated if condition
+                if (map_set.size() > now_id) // unnecessary if condition
                 {
                     map_set[now_id].take_photo(namespace_);      // Perform photo taking
                     path_show = map_set[now_id].get_path_show(); // Visualize path
@@ -2319,7 +2343,7 @@ public:
             if (is_transfer || map_set.size() == now_id)
             {
                 global_map.get_gimbal_rpy(target_angle_rpy);
-                // cout<<"Gonna pub this gimbals rpy:"<<target_angle_rpy.transpose()<<endl;//TODO:test target_angle rpy
+
                 cmd = position_msg_build(now_global_position, target_position, target_angle_rpy.z());
             }
             else
@@ -2331,7 +2355,7 @@ public:
                 catch (...)
                 {
                 }
-
+                //TODO: St1 sending path msg
                 cmd = position_msg_build(now_global_position, target_position, target_angle_rpy.z());
             }
             gimbal = gimbal_msg_build(target_angle_rpy);
@@ -2364,7 +2388,7 @@ public:
         path_show.header.frame_id = "world";
         return path_show;
     }
-    // communication part
+    // TODO:communicate part
     bool get_position_plan_msg(string &msg)
     {
         if (!odom_get || !finish_init)
@@ -2392,6 +2416,7 @@ public:
         msg = "mapglobal;" + to_string(Teamid) + ";" + global_map.get_num_str() + global_map.get_map_str();
         return true;
     }
+
     bool get_local_massage(string &msg)
     {
         if (!is_leader || !finish_init || state >= 2 || map_set.size() == now_id)
@@ -2490,6 +2515,7 @@ public:
                         now_id++;
                         return;
                     }
+
                     map_set[now_id].update_state(orin, stoi(state_str));
                     info_mannager.update_state(orin, stoi(state_str));
                 }
@@ -2536,6 +2562,7 @@ public:
                 {
                     string state_str;
                     getline(msg_stream, state_str, ';');
+                    //cout << "Communicate_state_set: " << state_str << endl;
                     state = stoi(state_str);
                     return;
                 }
